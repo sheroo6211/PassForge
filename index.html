@@ -856,7 +856,7 @@ function unlockPro() {
   document.getElementById('upgrade-btn').style.display = 'none';
   ['bulk-lock', 'passphrase-lock', 'pin-lock', 'history-lock'].forEach(id => {
     const el = document.getElementById(id);
-    if (el) el.classList.add('hidden');
+    if (el) { el.classList.add('hidden'); el.style.display = 'none'; }
   });
   renderHistory();
 }
@@ -891,7 +891,7 @@ if (state.isPremium) unlockPro();
 if (!state.isPremium) {
   ['bulk-lock', 'passphrase-lock', 'pin-lock', 'history-lock'].forEach(id => {
     const el = document.getElementById(id);
-    if (el) el.classList.remove('hidden');
+    if (el) { el.classList.remove('hidden'); el.style.display = 'flex'; }
   });
 }
 
