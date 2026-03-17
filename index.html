@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PassForge — Strong Password Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f0ede8;
+  --bg2: #e5e1da;
+  --bg3: #d8d3ca;
+  --surface: #ffffff;
+  --border: #ccc8c0;
+  --ink: #1a1814;
+  --ink2: #4a4740;
+  --ink3: #8a8680;
+  --orange: #e85d26;
+  --orange2: #ff7a40;
+  --orange-dim: rgba(232,93,38,0.1);
+  --green: #2a7a4f;
+  --green-dim: rgba(42,122,79,0.12);
+  --amber: #c97d10;
+  --red: #c0392b;
+  --red-dim: rgba(192,57,43,0.1);
+  --shadow: 0 2px 16px rgba(26,24,20,0.10);
+  --shadow-lg: 0 8px 40px rgba(26,24,20,0.16);
+  --radius: 10px;
+  --radius-lg: 18px;
+  --font: 'Syne', sans-serif;
+  --font-mono: 'Space Mono', monospace;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--ink);
+  min-height: 100vh;
+}
+
+/* Diagonal stripe background */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 40px,
+    rgba(26,24,20,0.015) 40px,
+    rgba(26,24,20,0.015) 41px
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+.app { position: relative; z-index: 1; max-width: 680px; margin: 0 auto; padding: 0 20px 80px; }
+
+/* HEADER */
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 24px 0; border-bottom: 2px solid var(--ink);
+  flex-wrap: wrap; gap: 12px;
+}
+.logo { display: flex; align-items: center; gap: 12px; }
+.logo-icon {
+  width: 44px; height: 44px;
+  background: var(--ink); border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.3rem;
+}
+.logo-name { font-family: var(--font); font-size: 1.5rem; font-weight: 800; color: var(--ink); letter-spacing: -1px; }
+.logo-name span { color: var(--orange); }
+
+.header-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.pro-badge {
+  background: var(--ink); color: var(--orange);
+  font-size: 0.65rem; font-weight: 700; letter-spacing: 2px;
+  padding: 4px 10px; border-radius: 6px; text-transform: uppercase; display: none;
+}
+.pro-badge.visible { display: inline-block; }
+
+.btn-sm {
+  padding: 8px 14px; background: var(--surface);
+  border: 1.5px solid var(--border); border-radius: 8px;
+  color: var(--ink2); font-family: var(--font); font-size: 0.75rem;
+  font-weight: 700; cursor: pointer; transition: all 0.2s;
+}
+.btn-sm:hover { border-color: var(--ink); color: var(--ink); }
+
+.btn-upgrade {
+  padding: 8px 16px; background: var(--orange);
+  border: none; border-radius: 8px; color: white;
+  font-family: var(--font); font-size: 0.75rem; font-weight: 700;
+  cursor: pointer; transition: all 0.2s;
+}
+.btn-upgrade:hover { background: var(--orange2); transform: translateY(-1px); }
+
+/* HERO */
+.hero { padding: 48px 0 32px; text-align: center; }
+.hero-label {
+  display: inline-block; background: var(--ink); color: var(--orange);
+  font-size: 0.68rem; font-weight: 700; letter-spacing: 3px;
+  text-transform: uppercase; padding: 5px 14px; border-radius: 4px;
+  margin-bottom: 20px;
+}
+.hero-title {
+  font-size: clamp(2.4rem, 6vw, 3.8rem); font-weight: 800;
+  line-height: 1.05; color: var(--ink); margin-bottom: 14px;
+  letter-spacing: -2px;
+}
+.hero-title span { color: var(--orange); }
+.hero-sub { color: var(--ink3); font-size: 0.95rem; line-height: 1.7; max-width: 420px; margin: 0 auto; }
+
+/* MAIN GENERATOR */
+.generator {
+  background: var(--ink); border-radius: var(--radius-lg);
+  padding: 32px; margin-bottom: 20px;
+  box-shadow: var(--shadow-lg);
+  position: relative; overflow: hidden;
+}
+.generator::before {
+  content: '🔐';
+  position: absolute; right: 24px; top: 20px;
+  font-size: 4rem; opacity: 0.08; pointer-events: none;
+}
+
+.password-display {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: var(--radius);
+  padding: 20px 20px 20px 24px;
+  margin-bottom: 20px;
+  display: flex; align-items: center; gap: 12px;
+  min-height: 72px;
+}
+.password-text {
+  font-family: var(--font-mono);
+  font-size: 1.1rem; color: #fff;
+  letter-spacing: 2px; flex: 1;
+  word-break: break-all; line-height: 1.5;
+}
+.password-text.empty { color: rgba(255,255,255,0.3); font-size: 0.9rem; letter-spacing: 0; }
+
+.copy-btn {
+  padding: 10px 18px; background: var(--orange);
+  border: none; border-radius: 8px; color: white;
+  font-family: var(--font); font-size: 0.78rem; font-weight: 700;
+  cursor: pointer; transition: all 0.2s; white-space: nowrap; flex-shrink: 0;
+}
+.copy-btn:hover { background: var(--orange2); transform: scale(1.05); }
+
+/* Strength meter */
+.strength-row {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 24px;
+}
+.strength-bars { display: flex; gap: 4px; flex: 1; }
+.strength-bar {
+  flex: 1; height: 4px; border-radius: 2px;
+  background: rgba(255,255,255,0.1); transition: background 0.3s;
+}
+.strength-bar.weak { background: var(--red); }
+.strength-bar.medium { background: var(--amber); }
+.strength-bar.strong { background: #4caf50; }
+.strength-bar.very-strong { background: var(--orange); }
+.strength-label { font-size: 0.72rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: rgba(255,255,255,0.5); min-width: 70px; text-align: right; }
+.strength-label.weak { color: var(--red); }
+.strength-label.medium { color: var(--amber); }
+.strength-label.strong { color: #4caf50; }
+.strength-label.very-strong { color: var(--orange); }
+
+/* Controls */
+.control-label {
+  font-size: 0.72rem; font-weight: 700; letter-spacing: 2px;
+  text-transform: uppercase; color: rgba(255,255,255,0.5);
+  margin-bottom: 10px; display: flex; justify-content: space-between;
+}
+.control-label span { color: var(--orange); font-size: 0.85rem; letter-spacing: 0; }
+
+.length-slider {
+  width: 100%; height: 4px; border-radius: 2px;
+  background: rgba(255,255,255,0.15); outline: none;
+  -webkit-appearance: none; cursor: pointer; margin-bottom: 24px;
+}
+.length-slider::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 20px; height: 20px;
+  border-radius: 50%; background: var(--orange); cursor: pointer;
+  box-shadow: 0 0 12px rgba(232,93,38,0.5);
+}
+
+.toggles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 24px; }
+.toggle-item {
+  display: flex; align-items: center; justify-content: space-between;
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px; padding: 12px 14px; cursor: pointer; transition: all 0.2s;
+}
+.toggle-item:hover { border-color: rgba(255,255,255,0.25); }
+.toggle-item.on { border-color: var(--orange); background: rgba(232,93,38,0.12); }
+.toggle-name { font-size: 0.8rem; font-weight: 600; color: rgba(255,255,255,0.7); }
+.toggle-item.on .toggle-name { color: white; }
+.toggle-switch {
+  width: 32px; height: 18px; border-radius: 9px;
+  background: rgba(255,255,255,0.15); position: relative; transition: all 0.2s; flex-shrink: 0;
+}
+.toggle-item.on .toggle-switch { background: var(--orange); }
+.toggle-switch::after {
+  content: ''; position: absolute; top: 3px; left: 3px;
+  width: 12px; height: 12px; border-radius: 50%;
+  background: white; transition: all 0.2s;
+}
+.toggle-item.on .toggle-switch::after { left: 17px; }
+
+.btn-generate {
+  width: 100%; padding: 16px; background: var(--orange);
+  border: none; border-radius: var(--radius); color: white;
+  font-family: var(--font); font-weight: 800; font-size: 1rem;
+  cursor: pointer; transition: all 0.2s; letter-spacing: 0.5px;
+}
+.btn-generate:hover { background: var(--orange2); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(232,93,38,0.4); }
+.btn-generate:active { transform: translateY(0); }
+
+/* TABS */
+.tabs {
+  display: flex; gap: 4px; margin: 28px 0 20px;
+  background: var(--bg2); border-radius: 10px; padding: 4px;
+}
+.tab {
+  flex: 1; padding: 9px 12px; border-radius: 7px; border: none;
+  background: transparent; color: var(--ink3); font-family: var(--font);
+  font-size: 0.78rem; font-weight: 700; cursor: pointer; transition: all 0.2s; text-align: center;
+}
+.tab:hover { color: var(--ink); }
+.tab.active { background: var(--surface); color: var(--ink); box-shadow: var(--shadow); }
+
+/* TAB CONTENT */
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* PRO FEATURES */
+.pro-card {
+  background: var(--surface); border: 1.5px solid var(--border);
+  border-radius: var(--radius-lg); overflow: hidden; margin-bottom: 16px;
+}
+.pro-card-header {
+  padding: 14px 20px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.pro-card-title { font-size: 0.88rem; font-weight: 700; color: var(--ink); }
+.pro-tag {
+  font-size: 0.62rem; font-weight: 700; letter-spacing: 1px;
+  background: var(--orange-dim); border: 1px solid var(--orange);
+  color: var(--orange); padding: 2px 8px; border-radius: 4px; text-transform: uppercase;
+}
+.pro-card-body { padding: 18px 20px; position: relative; }
+
+.locked-blur { filter: blur(3px); pointer-events: none; }
+.lock-overlay {
+  position: absolute; inset: 0;
+  background: rgba(240,237,232,0.85);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 10px;
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  cursor: pointer;
+}
+.lock-overlay-text { font-size: 0.82rem; font-weight: 700; color: var(--orange); }
+.lock-overlay-btn {
+  padding: 8px 18px; background: var(--orange);
+  border: none; border-radius: 8px; color: white;
+  font-family: var(--font); font-size: 0.75rem; font-weight: 700; cursor: pointer;
+}
+
+/* MULTI PASSWORD */
+.multi-grid { display: flex; flex-direction: column; gap: 8px; }
+.multi-item {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--bg2); border-radius: 8px; padding: 12px 14px;
+}
+.multi-pw { font-family: var(--font-mono); font-size: 0.82rem; color: var(--ink); flex: 1; word-break: break-all; }
+.multi-copy {
+  padding: 5px 10px; background: var(--surface); border: 1px solid var(--border);
+  border-radius: 6px; color: var(--ink3); font-family: var(--font);
+  font-size: 0.7rem; font-weight: 700; cursor: pointer; transition: all 0.2s; flex-shrink: 0;
+}
+.multi-copy:hover { border-color: var(--orange); color: var(--orange); }
+
+/* PASSPHRASE */
+.passphrase-display {
+  background: var(--bg2); border-radius: var(--radius);
+  padding: 16px 18px; font-family: var(--font-mono);
+  font-size: 0.95rem; color: var(--ink); letter-spacing: 1px;
+  word-break: break-all; margin-bottom: 12px; line-height: 1.6;
+  min-height: 60px;
+}
+
+/* HISTORY */
+.history-list { display: flex; flex-direction: column; gap: 6px; }
+.history-item {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--bg2); border-radius: 8px; padding: 10px 14px;
+}
+.history-pw { font-family: var(--font-mono); font-size: 0.78rem; color: var(--ink2); flex: 1; word-break: break-all; }
+.history-time { font-size: 0.68rem; color: var(--ink3); flex-shrink: 0; }
+.history-copy {
+  padding: 4px 8px; background: var(--surface); border: 1px solid var(--border);
+  border-radius: 5px; color: var(--ink3); font-family: var(--font);
+  font-size: 0.68rem; cursor: pointer; transition: all 0.2s; flex-shrink: 0;
+}
+.history-copy:hover { border-color: var(--orange); color: var(--orange); }
+
+/* PIN */
+.pin-display {
+  font-family: var(--font-mono); font-size: 2.5rem; font-weight: 700;
+  color: var(--ink); letter-spacing: 8px; text-align: center;
+  padding: 20px; background: var(--bg2); border-radius: var(--radius);
+  margin-bottom: 12px;
+}
+.pin-btns { display: flex; gap: 8px; }
+.pin-btn {
+  flex: 1; padding: 10px; background: var(--surface); border: 1.5px solid var(--border);
+  border-radius: 8px; color: var(--ink2); font-family: var(--font);
+  font-size: 0.78rem; font-weight: 700; cursor: pointer; transition: all 0.2s;
+}
+.pin-btn:hover { border-color: var(--orange); color: var(--orange); }
+.pin-btn.active { background: var(--orange); border-color: var(--orange); color: white; }
+
+/* MODAL */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(26,24,20,0.75);
+  backdrop-filter: blur(6px); z-index: 10000;
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px; animation: fadeIn 0.2s ease;
+}
+.modal-overlay.hidden { display: none; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.modal-box {
+  background: var(--surface); border-radius: var(--radius-lg);
+  padding: 40px 32px; max-width: 420px; width: 100%;
+  text-align: center; box-shadow: var(--shadow-lg);
+  border: 2px solid var(--ink); position: relative;
+}
+.modal-box::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px;
+  background: var(--orange); border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+.modal-icon { font-size: 2.5rem; margin-bottom: 12px; }
+.modal-title { font-size: 1.6rem; font-weight: 800; color: var(--ink); margin-bottom: 8px; letter-spacing: -0.5px; }
+.modal-desc { font-size: 0.88rem; color: var(--ink2); line-height: 1.7; margin-bottom: 20px; }
+.modal-price { font-size: 3rem; font-weight: 800; color: var(--orange); line-height: 1; margin-bottom: 4px; }
+.modal-price-sub { font-size: 0.72rem; color: var(--ink3); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 20px; }
+.modal-features { text-align: left; background: var(--bg2); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 20px; }
+.modal-feature { display: flex; align-items: center; gap: 10px; padding: 7px 0; font-size: 0.83rem; color: var(--ink2); border-bottom: 1px solid var(--border); }
+.modal-feature:last-child { border-bottom: none; }
+.modal-feature .chk { color: var(--orange); }
+.btn-buy {
+  width: 100%; padding: 16px; background: var(--orange);
+  border: none; border-radius: var(--radius); color: white; font-family: var(--font);
+  font-weight: 800; font-size: 0.95rem; cursor: pointer; transition: all 0.2s; margin-bottom: 12px;
+}
+.btn-buy:hover { background: var(--orange2); transform: translateY(-2px); }
+.unlock-row { display: flex; gap: 8px; margin-bottom: 12px; }
+.unlock-input {
+  flex: 1; padding: 11px 14px; background: var(--bg2);
+  border: 1.5px solid var(--border); border-radius: var(--radius);
+  color: var(--ink); font-family: var(--font-mono); font-size: 0.82rem;
+  letter-spacing: 2px; text-align: center; text-transform: uppercase; outline: none;
+}
+.unlock-input:focus { border-color: var(--orange); }
+.btn-redeem {
+  padding: 11px 14px; background: var(--bg2); border: 1.5px solid var(--border);
+  border-radius: var(--radius); color: var(--ink2); font-family: var(--font);
+  font-size: 0.78rem; cursor: pointer; transition: all 0.2s;
+}
+.btn-redeem:hover { border-color: var(--orange); color: var(--orange); }
+.modal-close { background: none; border: none; color: var(--ink3); font-family: var(--font); font-size: 0.78rem; cursor: pointer; text-decoration: underline; padding: 8px; }
+
+/* SHARE */
+.share-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+.share-btn { padding: 14px 10px; border-radius: var(--radius); border: 1.5px solid var(--border); background: var(--bg2); color: var(--ink2); font-family: var(--font); font-size: 0.78rem; font-weight: 700; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; gap: 6px; text-decoration: none; }
+.share-btn:hover { border-color: var(--orange); color: var(--orange); }
+.share-icon { font-size: 1.4rem; }
+
+/* TOAST */
+#toast-container { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 99999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+.toast { background: var(--ink); border-radius: 10px; padding: 12px 20px; font-size: 0.85rem; color: white; box-shadow: var(--shadow-lg); animation: toastIn 0.3s ease; white-space: nowrap; }
+@keyframes toastIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Responsive */
+@media (max-width: 480px) {
+  .toggles { grid-template-columns: 1fr; }
+  .hero-title { font-size: 2.2rem; }
+}
+</style>
+</head>
+<body>
+
+<div id="toast-container"></div>
+
+<!-- PREMIUM MODAL -->
+<div class="modal-overlay hidden" id="premium-modal">
+  <div class="modal-box">
+    <div class="modal-icon">🔐</div>
+    <div class="modal-title">Unlock Pro</div>
+    <div class="modal-desc">Get the full PassForge experience — bulk generation, passphrases, PIN codes and more.</div>
+    <div class="modal-price">$2.99</div>
+    <div class="modal-price-sub">ONE-TIME — YOURS FOREVER</div>
+    <div class="modal-features">
+      <div class="modal-feature"><span class="chk">✓</span> Generate up to 10 passwords at once</div>
+      <div class="modal-feature"><span class="chk">✓</span> Passphrase generator</div>
+      <div class="modal-feature"><span class="chk">✓</span> PIN generator (4 or 6 digit)</div>
+      <div class="modal-feature"><span class="chk">✓</span> Password history (last 20)</div>
+      <div class="modal-feature"><span class="chk">✓</span> Exclude confusing characters</div>
+    </div>
+    <div class="unlock-row">
+      <input class="unlock-input" type="text" id="unlock-input" placeholder="HAVE A CODE?" maxlength="20">
+      <button class="btn-redeem" onclick="redeemCode()">Redeem</button>
+    </div>
+    <button class="btn-buy" onclick="handleUpgrade()">⚡ Unlock Pro — $2.99</button>
+    <br>
+    <button class="modal-close" onclick="closeModal('premium-modal')">Maybe later</button>
+  </div>
+</div>
+
+<!-- SHARE MODAL -->
+<div class="modal-overlay hidden" id="share-modal">
+  <div class="modal-box">
+    <div class="modal-icon">🔗</div>
+    <div class="modal-title">Share PassForge</div>
+    <div class="modal-desc">Help someone stay secure online — share this free password generator!</div>
+    <div class="share-grid">
+      <a class="share-btn" id="share-whatsapp" href="#" target="_blank"><span class="share-icon">💬</span>WhatsApp</a>
+      <a class="share-btn" id="share-twitter" href="#" target="_blank"><span class="share-icon">🐦</span>Twitter / X</a>
+      <a class="share-btn" id="share-reddit" href="#" target="_blank"><span class="share-icon">🤖</span>Reddit</a>
+      <button class="share-btn" onclick="copyLink()"><span class="share-icon">🔗</span>Copy Link</button>
+    </div>
+    <button class="modal-close" onclick="closeModal('share-modal')">Close</button>
+  </div>
+</div>
+
+<div class="app">
+  <header>
+    <div class="logo">
+      <div class="logo-icon">🔐</div>
+      <span class="logo-name">Pass<span>Forge</span></span>
+    </div>
+    <div class="header-right">
+      <span class="pro-badge" id="pro-badge">PRO ✓</span>
+      <button class="btn-upgrade" id="upgrade-btn" onclick="openPremiumModal()">⚡ Pro — $2.99</button>
+      <button class="btn-sm" onclick="openShareModal()">📤 Share</button>
+    </div>
+  </header>
+
+  <div class="hero">
+    <div class="hero-label">Free Password Generator</div>
+    <h1 class="hero-title">Forge <span>unbreakable</span><br>passwords.</h1>
+    <p class="hero-sub">Generate strong, secure passwords in seconds. No account needed, nothing stored online.</p>
+  </div>
+
+  <!-- MAIN GENERATOR -->
+  <div class="generator">
+    <div class="password-display">
+      <div class="password-text empty" id="password-display">Click Generate to create a password</div>
+      <button class="copy-btn" onclick="copyPassword()">Copy</button>
+    </div>
+
+    <div class="strength-row">
+      <div class="strength-bars">
+        <div class="strength-bar" id="bar1"></div>
+        <div class="strength-bar" id="bar2"></div>
+        <div class="strength-bar" id="bar3"></div>
+        <div class="strength-bar" id="bar4"></div>
+      </div>
+      <div class="strength-label" id="strength-label">—</div>
+    </div>
+
+    <div class="control-label">Length <span id="length-display">16</span></div>
+    <input type="range" class="length-slider" id="length-slider" min="6" max="32" value="16" oninput="updateLength()">
+
+    <div class="toggles">
+      <div class="toggle-item on" id="toggle-upper" onclick="toggleOpt('upper')">
+        <span class="toggle-name">Uppercase A-Z</span>
+        <div class="toggle-switch"></div>
+      </div>
+      <div class="toggle-item on" id="toggle-lower" onclick="toggleOpt('lower')">
+        <span class="toggle-name">Lowercase a-z</span>
+        <div class="toggle-switch"></div>
+      </div>
+      <div class="toggle-item on" id="toggle-numbers" onclick="toggleOpt('numbers')">
+        <span class="toggle-name">Numbers 0-9</span>
+        <div class="toggle-switch"></div>
+      </div>
+      <div class="toggle-item on" id="toggle-symbols" onclick="toggleOpt('symbols')">
+        <span class="toggle-name">Symbols !@#$</span>
+        <div class="toggle-switch"></div>
+      </div>
+    </div>
+
+    <button class="btn-generate" onclick="generatePassword()">⚡ Generate Password</button>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('bulk')">Bulk Generate</button>
+    <button class="tab" onclick="showTab('passphrase')">Passphrase</button>
+    <button class="tab" onclick="showTab('pin')">PIN Code</button>
+    <button class="tab" onclick="showTab('history')">History</button>
+  </div>
+
+  <!-- BULK GENERATE -->
+  <div class="tab-content active" id="tab-bulk">
+    <div class="pro-card">
+      <div class="pro-card-header">
+        <div class="pro-card-title">Generate Multiple Passwords</div>
+        <span class="pro-tag">PRO</span>
+      </div>
+      <div class="pro-card-body">
+        <div id="bulk-content">
+          <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+            <select id="bulk-count" style="padding:9px 14px;background:var(--bg2);border:1.5px solid var(--border);border-radius:8px;color:var(--ink);font-family:var(--font);font-size:0.82rem;outline:none;cursor:pointer">
+              <option value="3">3 passwords</option>
+              <option value="5" selected>5 passwords</option>
+              <option value="10">10 passwords</option>
+            </select>
+            <button onclick="generateBulk()" style="padding:9px 20px;background:var(--orange);border:none;border-radius:8px;color:white;font-family:var(--font);font-size:0.82rem;font-weight:700;cursor:pointer;flex:1">Generate</button>
+          </div>
+          <div class="multi-grid" id="bulk-grid">
+            <div style="color:var(--ink3);font-size:0.85rem;text-align:center;padding:20px">Click Generate to create multiple passwords</div>
+          </div>
+        </div>
+        <div class="lock-overlay hidden" id="bulk-lock" onclick="openPremiumModal()">
+          <div style="font-size:2rem">🔒</div>
+          <div class="lock-overlay-text">⚡ Pro Feature</div>
+          <button class="lock-overlay-btn">Unlock Pro — $2.99</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PASSPHRASE -->
+  <div class="tab-content" id="tab-passphrase">
+    <div class="pro-card">
+      <div class="pro-card-header">
+        <div class="pro-card-title">Passphrase Generator</div>
+        <span class="pro-tag">PRO</span>
+      </div>
+      <div class="pro-card-body">
+        <div id="passphrase-content">
+          <p style="font-size:0.82rem;color:var(--ink3);margin-bottom:14px;line-height:1.6">Passphrases are easier to remember than random passwords but just as secure. Example: <strong style="color:var(--ink)">BlueMountain$River7</strong></p>
+          <div class="passphrase-display" id="passphrase-display">Click Generate to create a passphrase</div>
+          <div style="display:flex;gap:8px">
+            <button onclick="generatePassphrase()" style="flex:1;padding:11px;background:var(--orange);border:none;border-radius:8px;color:white;font-family:var(--font);font-size:0.82rem;font-weight:700;cursor:pointer">Generate Passphrase</button>
+            <button onclick="copyPassphrase()" style="padding:11px 16px;background:var(--bg2);border:1.5px solid var(--border);border-radius:8px;color:var(--ink2);font-family:var(--font);font-size:0.78rem;font-weight:700;cursor:pointer">Copy</button>
+          </div>
+        </div>
+        <div class="lock-overlay hidden" id="passphrase-lock" onclick="openPremiumModal()">
+          <div style="font-size:2rem">🔒</div>
+          <div class="lock-overlay-text">⚡ Pro Feature</div>
+          <button class="lock-overlay-btn">Unlock Pro — $2.99</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PIN -->
+  <div class="tab-content" id="tab-pin">
+    <div class="pro-card">
+      <div class="pro-card-header">
+        <div class="pro-card-title">PIN Code Generator</div>
+        <span class="pro-tag">PRO</span>
+      </div>
+      <div class="pro-card-body">
+        <div id="pin-content">
+          <div class="pin-display" id="pin-display">——</div>
+          <div class="pin-btns" style="margin-bottom:12px">
+            <button class="pin-btn active" id="pin-4" onclick="setPinLength(4)">4 Digits</button>
+            <button class="pin-btn" id="pin-6" onclick="setPinLength(6)">6 Digits</button>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button onclick="generatePIN()" style="flex:1;padding:11px;background:var(--orange);border:none;border-radius:8px;color:white;font-family:var(--font);font-size:0.82rem;font-weight:700;cursor:pointer">Generate PIN</button>
+            <button onclick="copyPIN()" style="padding:11px 16px;background:var(--bg2);border:1.5px solid var(--border);border-radius:8px;color:var(--ink2);font-family:var(--font);font-size:0.78rem;font-weight:700;cursor:pointer">Copy</button>
+          </div>
+        </div>
+        <div class="lock-overlay hidden" id="pin-lock" onclick="openPremiumModal()">
+          <div style="font-size:2rem">🔒</div>
+          <div class="lock-overlay-text">⚡ Pro Feature</div>
+          <button class="lock-overlay-btn">Unlock Pro — $2.99</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HISTORY -->
+  <div class="tab-content" id="tab-history">
+    <div class="pro-card">
+      <div class="pro-card-header">
+        <div class="pro-card-title">Password History</div>
+        <span class="pro-tag">PRO</span>
+      </div>
+      <div class="pro-card-body">
+        <div id="history-content">
+          <div class="history-list" id="history-list">
+            <div style="color:var(--ink3);font-size:0.85rem;text-align:center;padding:20px">No history yet — generate some passwords first!</div>
+          </div>
+          <button onclick="clearHistory()" style="margin-top:12px;width:100%;padding:9px;background:transparent;border:1.5px solid var(--border);border-radius:8px;color:var(--ink3);font-family:var(--font);font-size:0.78rem;font-weight:700;cursor:pointer">Clear History</button>
+        </div>
+        <div class="lock-overlay hidden" id="history-lock" onclick="openPremiumModal()">
+          <div style="font-size:2rem">🔒</div>
+          <div class="lock-overlay-text">⚡ Pro Feature</div>
+          <button class="lock-overlay-btn">Unlock Pro — $2.99</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ============================================================
+// CONFIG
+// ============================================================
+const OWNER_CODE = 'PASSFORGE2024';
+const GUMROAD_LINK = 'https://gumroad.com/l/passforge';
+const APP_URL = 'https://sheroo6211.github.io/PassForge';
+const APP_MSG = 'Generate strong, secure passwords for free with PassForge! 🔐 No account needed.';
+
+// ============================================================
+// STATE
+// ============================================================
+let state = { isPremium: false };
+let opts = { upper: true, lower: true, numbers: true, symbols: true };
+let currentLength = 16;
+let currentPassword = '';
+let currentPassphrase = '';
+let currentPIN = '';
+let pinLength = 4;
+let history = [];
+
+function loadState() {
+  try {
+    const s = localStorage.getItem('pf_state');
+    if (s) Object.assign(state, JSON.parse(s));
+    const h = localStorage.getItem('pf_history');
+    if (h) history = JSON.parse(h);
+  } catch(e) {}
+}
+function saveState() {
+  localStorage.setItem('pf_state', JSON.stringify(state));
+  localStorage.setItem('pf_history', JSON.stringify(history.slice(0, 20)));
+}
+
+// ============================================================
+// GENERATOR
+// ============================================================
+const CHARS = {
+  upper: 'ABCDEFGHJKLMNPQRSTUVWXYZ',
+  lower: 'abcdefghjkmnpqrstuvwxyz',
+  numbers: '23456789',
+  symbols: '!@#$%^&*-_=+?'
+};
+
+function generatePassword() {
+  const pool = Object.entries(opts).filter(([k, v]) => v).map(([k]) => CHARS[k]).join('');
+  if (!pool) { showToast('Please enable at least one character type!'); return; }
+
+  let pw = '';
+  // Ensure at least one of each enabled type
+  Object.entries(opts).forEach(([k, v]) => { if (v) pw += CHARS[k][Math.floor(Math.random() * CHARS[k].length)]; });
+  // Fill the rest
+  for (let i = pw.length; i < currentLength; i++) pw += pool[Math.floor(Math.random() * pool.length)];
+  // Shuffle
+  pw = pw.split('').sort(() => Math.random() - 0.5).join('');
+
+  currentPassword = pw;
+
+  const el = document.getElementById('password-display');
+  el.textContent = pw;
+  el.classList.remove('empty');
+
+  updateStrength(pw);
+
+  // Add to history
+  if (state.isPremium) {
+    history.unshift({ pw, time: new Date().toLocaleTimeString() });
+    if (history.length > 20) history.pop();
+    saveState();
+    renderHistory();
+  }
+}
+
+function updateStrength(pw) {
+  let score = 0;
+  if (pw.length >= 8) score++;
+  if (pw.length >= 14) score++;
+  if (/[A-Z]/.test(pw) && /[a-z]/.test(pw)) score++;
+  if (/[0-9]/.test(pw)) score++;
+  if (/[^A-Za-z0-9]/.test(pw)) score++;
+
+  const bars = ['bar1','bar2','bar3','bar4'];
+  const label = document.getElementById('strength-label');
+  const classes = { 1: 'weak', 2: 'medium', 3: 'strong', 4: 'very-strong' };
+  const labels = { 1: 'Weak', 2: 'Medium', 3: 'Strong', 4: 'Very Strong' };
+  const lvl = Math.min(4, Math.max(1, score - 1 || 1));
+
+  bars.forEach((b, i) => {
+    const el = document.getElementById(b);
+    el.className = 'strength-bar';
+    if (i < lvl) el.classList.add(classes[lvl]);
+  });
+  label.className = 'strength-label ' + classes[lvl];
+  label.textContent = labels[lvl];
+}
+
+function updateLength() {
+  currentLength = parseInt(document.getElementById('length-slider').value);
+  document.getElementById('length-display').textContent = currentLength;
+}
+
+function toggleOpt(key) {
+  const active = Object.values(opts).filter(Boolean).length;
+  if (opts[key] && active <= 1) { showToast('At least one option must be enabled!'); return; }
+  opts[key] = !opts[key];
+  const el = document.getElementById('toggle-' + key);
+  el.classList.toggle('on', opts[key]);
+}
+
+function copyPassword() {
+  if (!currentPassword) { showToast('Generate a password first!'); return; }
+  navigator.clipboard.writeText(currentPassword).then(() => showToast('Password copied! 🔐'));
+}
+
+// ============================================================
+// BULK
+// ============================================================
+function generateBulk() {
+  const count = parseInt(document.getElementById('bulk-count').value);
+  const pool = Object.entries(opts).filter(([k, v]) => v).map(([k]) => CHARS[k]).join('');
+  if (!pool) { showToast('Enable at least one character type!'); return; }
+
+  const passwords = [];
+  for (let i = 0; i < count; i++) {
+    let pw = '';
+    Object.entries(opts).forEach(([k, v]) => { if (v) pw += CHARS[k][Math.floor(Math.random() * CHARS[k].length)]; });
+    for (let j = pw.length; j < currentLength; j++) pw += pool[Math.floor(Math.random() * pool.length)];
+    pw = pw.split('').sort(() => Math.random() - 0.5).join('');
+    passwords.push(pw);
+  }
+
+  document.getElementById('bulk-grid').innerHTML = passwords.map((pw, i) => `
+    <div class="multi-item">
+      <span class="multi-pw">${pw}</span>
+      <button class="multi-copy" onclick="navigator.clipboard.writeText('${pw}').then(()=>showToast('Copied!'))">Copy</button>
+    </div>
+  `).join('');
+}
+
+// ============================================================
+// PASSPHRASE
+// ============================================================
+const WORDS = ['Blue','Red','Green','Dark','Bright','Swift','Calm','Bold','Cool','Warm','Fire','Ice','Wind','Rock','Star','Moon','Sun','Sky','Sea','Tree','Lion','Eagle','Tiger','Storm','River','Cloud','Stone','Forest','Silver','Golden','Mighty','Silent','Wild','Brave','Sharp','Quick','Fierce','Noble','Wise','Strong'];
+const NOUNS = ['Mountain','Valley','River','Ocean','Forest','Desert','Castle','Bridge','Tower','Garden','Island','Canyon','Meadow','Thunder','Lightning','Falcon','Dragon','Phoenix','Wolf','Hawk','Sword','Shield','Arrow','Crown','Flame','Wave','Peak','Summit','Ridge','Cliff'];
+
+function generatePassphrase() {
+  const w1 = WORDS[Math.floor(Math.random() * WORDS.length)];
+  const w2 = NOUNS[Math.floor(Math.random() * NOUNS.length)];
+  const w3 = WORDS[Math.floor(Math.random() * WORDS.length)];
+  const num = Math.floor(Math.random() * 90) + 10;
+  const sym = ['!', '@', '#', '$', '&', '*'][Math.floor(Math.random() * 6)];
+  currentPassphrase = `${w1}${sym}${w2}${w3}${num}`;
+  document.getElementById('passphrase-display').textContent = currentPassphrase;
+}
+
+function copyPassphrase() {
+  if (!currentPassphrase) { showToast('Generate a passphrase first!'); return; }
+  navigator.clipboard.writeText(currentPassphrase).then(() => showToast('Passphrase copied! 🔐'));
+}
+
+// ============================================================
+// PIN
+// ============================================================
+function setPinLength(len) {
+  pinLength = len;
+  document.getElementById('pin-4').classList.toggle('active', len === 4);
+  document.getElementById('pin-6').classList.toggle('active', len === 6);
+}
+
+function generatePIN() {
+  currentPIN = Array.from({length: pinLength}, () => Math.floor(Math.random() * 10)).join('');
+  document.getElementById('pin-display').textContent = currentPIN;
+}
+
+function copyPIN() {
+  if (!currentPIN) { showToast('Generate a PIN first!'); return; }
+  navigator.clipboard.writeText(currentPIN).then(() => showToast('PIN copied! 🔐'));
+}
+
+// ============================================================
+// HISTORY
+// ============================================================
+function renderHistory() {
+  const el = document.getElementById('history-list');
+  if (history.length === 0) {
+    el.innerHTML = '<div style="color:var(--ink3);font-size:0.85rem;text-align:center;padding:20px">No history yet — generate some passwords first!</div>';
+    return;
+  }
+  el.innerHTML = history.map((h, i) => `
+    <div class="history-item">
+      <span class="history-pw">${h.pw}</span>
+      <span class="history-time">${h.time}</span>
+      <button class="history-copy" onclick="navigator.clipboard.writeText('${h.pw}').then(()=>showToast('Copied!'))">Copy</button>
+    </div>
+  `).join('');
+}
+
+function clearHistory() {
+  history = [];
+  saveState();
+  renderHistory();
+  showToast('History cleared!');
+}
+
+// ============================================================
+// TABS
+// ============================================================
+function showTab(id) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  document.querySelectorAll('.tab').forEach(t => {
+    if (t.textContent.toLowerCase().includes(id === 'passphrase' ? 'pass' : id === 'bulk' ? 'bulk' : id)) t.classList.add('active');
+  });
+}
+
+// ============================================================
+// PREMIUM
+// ============================================================
+function openPremiumModal() { document.getElementById('premium-modal').classList.remove('hidden'); }
+function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+function handleUpgrade() { window.open(GUMROAD_LINK, '_blank'); showToast('Complete payment then enter your code!'); }
+
+function redeemCode() {
+  const code = document.getElementById('unlock-input').value.trim().toUpperCase();
+  if (code === OWNER_CODE || code.startsWith('PF-')) {
+    state.isPremium = true; saveState();
+    closeModal('premium-modal');
+    unlockPro();
+    showToast('🎉 Pro unlocked! All features available.');
+  } else {
+    showToast('Invalid code — please check and try again.');
+  }
+}
+
+function unlockPro() {
+  document.getElementById('pro-badge').classList.add('visible');
+  document.getElementById('upgrade-btn').style.display = 'none';
+  ['bulk-lock', 'passphrase-lock', 'pin-lock', 'history-lock'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.add('hidden');
+  });
+  renderHistory();
+}
+
+// ============================================================
+// SHARE
+// ============================================================
+function openShareModal() {
+  document.getElementById('share-whatsapp').href = `https://wa.me/?text=${encodeURIComponent(APP_MSG + ' ' + APP_URL)}`;
+  document.getElementById('share-twitter').href = `https://twitter.com/intent/tweet?text=${encodeURIComponent(APP_MSG)}&url=${encodeURIComponent(APP_URL)}`;
+  document.getElementById('share-reddit').href = `https://reddit.com/submit?url=${encodeURIComponent(APP_URL)}&title=${encodeURIComponent('Free password generator — no account needed, works in your browser')}`;
+  document.getElementById('share-modal').classList.remove('hidden');
+}
+function copyLink() { navigator.clipboard.writeText(APP_URL).then(() => { showToast('Link copied! 🔗'); closeModal('share-modal'); }); }
+
+// ============================================================
+// TOAST
+// ============================================================
+function showToast(msg) {
+  const c = document.getElementById('toast-container');
+  const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg;
+  c.appendChild(t); setTimeout(() => t.remove(), 3000);
+}
+
+// ============================================================
+// INIT
+// ============================================================
+loadState();
+if (state.isPremium) unlockPro();
+
+// Show locks for free users
+if (!state.isPremium) {
+  ['bulk-lock', 'passphrase-lock', 'pin-lock', 'history-lock'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('hidden');
+  });
+}
+
+// Generate one on load
+generatePassword();
+</script>
+</body>
+</html>
